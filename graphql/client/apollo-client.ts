@@ -14,9 +14,18 @@ const httpLink = createHttpLink({
 // Error handling link
 const errorLink = onError((error) => {
   console.error('[GraphQL Error]:', error);
+  
+  // Log additional details in development
+  if (config.LOGGING) {
+    console.error('[GraphQL Error Details]:', {
+      networkError: error.networkError,
+      graphQLErrors: error.graphQLErrors,
+      operation: error.operation,
+    });
+  }
 });
 
-// Context link for headers
+// Context link for headers with authentication
 const authLink = setContext((_, { headers }) => {
   return {
     headers: {
@@ -44,11 +53,11 @@ export const apolloClient = new ApolloClient({
   cache,
   defaultOptions: {
     watchQuery: {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
+      errorPolicy: config.QUERY.DEFAULT_ERROR_POLICY,
+      fetchPolicy: config.QUERY.DEFAULT_FETCH_POLICY,
     },
     query: {
-      errorPolicy: 'all',
+      errorPolicy: config.QUERY.DEFAULT_ERROR_POLICY,
       fetchPolicy: 'cache-first',
     },
   },

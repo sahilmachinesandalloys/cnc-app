@@ -83,7 +83,7 @@ export default function HomePage() {
       <StatusBar
         translucent
         backgroundColor={Platform.OS === "android" ? "rgba(0,0,0,0.6)" : "transparent"}
-        barStyle="light-content"
+        barStyle="dark-content"
       />
 
       {/* Animated Header */}

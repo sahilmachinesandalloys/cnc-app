@@ -14,7 +14,10 @@ import {
   GET_PAGE_BY_SLUG,
   GET_HOMEPAGE,
   GET_ABOUT_PAGE,
-  GET_CONTACT_PAGE
+  GET_CONTACT_PAGE,
+  GET_MOBILE_HERO_SECTIONS,
+  GET_MOBILE_SERVICES,
+  GET_SERVICE_BY_ID
 } from '../graphql/queries';
 import { 
   PostsResponse, 
@@ -30,6 +33,13 @@ import {
   PagesVariables,
   PageVariables
 } from '../graphql/types/generated';
+import { MobileHeroSectionsResponse } from '../graphql/queries/heroSection';
+import {
+  MobileServicesResponse,
+  ServiceByIdResponse,
+  ServicesVariables,
+  ServiceByIdVariables
+} from '../graphql/queries/services';
 
 // Posts hooks
 export const usePosts = (variables?: PostsVariables) => {
@@ -133,6 +143,126 @@ export const useContactPage = () => {
   return useQuery<PagesResponse>(GET_CONTACT_PAGE, {
     errorPolicy: 'all',
   });
+};
+
+// Hero Section hooks
+export const useHeroSections = () => {
+  const { data, loading, error, refetch } = useQuery<MobileHeroSectionsResponse>(
+    GET_MOBILE_HERO_SECTIONS,
+    {
+      errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network',
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+
+  // Transform data for easier consumption
+  const heroSections = data?.heroSections?.data?.map((item: { id: any; attributes: { Title: any; Description: any; publishedAt: any; }; }) => ({
+    id: item.id,
+    title: item.attributes.Title,
+    subtitle: item.attributes.Description,
+    publishedAt: item.attributes.publishedAt,
+  })) || [];
+
+  return {
+    heroSections,
+    loading,
+    error,
+    refetch,
+    isEmpty: !loading && heroSections.length === 0,
+    hasData: !loading && heroSections.length > 0,
+  };
+};
+
+export const useHeroSection = (index: number = 0) => {
+  const { heroSections, loading, error } = useHeroSections();
+  
+  const currentHero = heroSections[index] || null;
+  
+  return {
+    hero: currentHero,
+    loading,
+    error,
+    totalCount: heroSections.length,
+    currentIndex: index,
+    hasNext: index < heroSections.length - 1,
+    hasPrevious: index > 0,
+  };
+};
+
+// Services hooks
+export const useServices = (variables?: ServicesVariables) => {
+  const { data, loading, error, refetch } = useQuery<MobileServicesResponse>(
+    GET_MOBILE_SERVICES,
+    {
+      variables,
+      errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network',
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+
+  // Transform data for easier consumption
+  const services = data?.services?.data?.map((item) => ({
+    id: item.id,
+    title: item.attributes.Title,
+    icon: getDefaultIcon(item.attributes.Title), // Use default icon mapping
+    slug: item.attributes.Slug,
+    iconUrl: item.attributes.Icon?.data?.attributes?.url,
+  })) || [];
+
+
+
+  return {
+    services,
+    loading,
+    error,
+    refetch,
+    isEmpty: !loading && services.length === 0,
+    hasData: !loading && services.length > 0,
+  };
+};
+
+export const useServiceById = (variables: ServiceByIdVariables) => {
+  return useQuery<ServiceByIdResponse, ServiceByIdVariables>(GET_SERVICE_BY_ID, {
+    variables,
+    errorPolicy: 'all',
+  });
+};
+
+// Helper function to map service titles to default Ionicons
+const getDefaultIcon = (title: string): string => {
+  const iconMap: { [key: string]: string } = {
+    'Spare Parts': 'construct',
+    'Laser Calibration': 'settings',
+    'CNC Training': 'school',
+    'IoT Solutions': 'wifi',
+    'Maintenance': 'cart',
+    'Repair': 'build',
+    'Installation': 'hammer',
+    'Consultation': 'chatbubbles',
+    'Support': 'help-circle',
+    'Parts': 'construct',
+    'Calibration': 'settings',
+    'Training': 'school',
+    'Solutions': 'wifi',
+    'Service': 'cart',
+  };
+
+  // Try exact match first
+  if (iconMap[title]) {
+    return iconMap[title];
+  }
+
+  // Try partial match
+  for (const [key, icon] of Object.entries(iconMap)) {
+    if (title.toLowerCase().includes(key.toLowerCase())) {
+      return icon;
+    }
+  }
+
+  // Default fallback
+  return 'construct';
 };
 
 // Utility hook for error handling

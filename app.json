@@ -28,6 +28,12 @@
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "extra": {
+      "EXPO_PUBLIC_STRAPI_URL": "https://admin.sahilcnc.com/graphql",
+      "EXPO_PUBLIC_API_KEY": "642fa036209462c2f72a0f8087f0a81149b54c4ed6842e2368ee365a18aa0449b6b0282bc705887ac161a5217747037b55ce31613dd202be56ae07c70aa3f3325ec8767e6e84795d88f98927df7901c6ba1dbf751ddb1928177c7e219d26866add3a8f223faa07527f2f1338999e6fa40420a3e9044816055760e48e8871ba36",
+      "EXPO_PUBLIC_API_SECRET": "cf1158adcc93715bbc6000c40ce3d1ec1ef0908204e7cd542254a2fbbb4fcbcb537a9991abafb2bcf901ad02cbdbdc827c925d84ed38d7138a94bd2c97f8ee334910b7f9dd0f553fd6677cc294d232d3fcd1f1e4e229a491b35a62562f8ec795d572268c4819094ee2c5ba929b3761cd904f12e64be659ee27ae0249fd3d1d82",
+      "router": {}
+    }
   }
 }

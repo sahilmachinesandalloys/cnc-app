@@ -1,18 +1,30 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, Linking, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { ResponsiveText } from '../ui';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
+import { useServices } from '../../hooks/useGraphQL';
+import ServicesSectionSkeleton from '../ui/ServicesSectionSkeleton';
 
 interface ServiceCardProps {
   icon: string;
+  iconUrl?: string;
   title: string;
   gradientColors: readonly [string, string];
   onPress: () => void;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, gradientColors, onPress }) => {
+interface ServiceData {
+  id: string;
+  title: string;
+  icon: string;
+  slug: string;
+  iconUrl?: string;
+}
+
+const ServiceCard: React.FC<ServiceCardProps> = ({ icon, iconUrl, title, gradientColors, onPress }) => {
+  console.log('ServiceCard render - icon:', icon, 'iconUrl:', iconUrl, 'title:', title);
   return (
     <TouchableOpacity style={styles.serviceCard} onPress={onPress}>
       <LinearGradient
@@ -23,7 +35,15 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, gradientColors, 
       >
         {/* Icon */}
         <View style={styles.iconContainer}>
-          <Ionicons name={icon as any} size={28} color={COLORS.white} />
+          {iconUrl ? (
+            <Image 
+              source={{ uri: iconUrl }} 
+              style={styles.iconImage}
+              resizeMode="contain"
+            />
+          ) : (
+            <Ionicons name={icon as any} size={28} color={COLORS.white} />
+          )}
         </View>
         
         {/* Title */}
@@ -36,43 +56,62 @@ const ServiceCard: React.FC<ServiceCardProps> = ({ icon, title, gradientColors, 
 };
 
 const ServicesSection: React.FC = () => {
-  const services = [
-    {
-      id: 1,
-      icon: 'construct',
-      title: 'Spare Parts',
-      gradientColors: ['#FF8A00', '#FF3D00'] as const, // Same orange-red gradient
-    },
-    {
-      id: 2,
-      icon: 'settings',
-      title: 'Laser Calibration',
-      gradientColors: ['#FF8A00', '#FF3D00'] as const, // Same orange-red gradient
-    },
-    {
-      id: 3,
-      icon: 'school',
-      title: 'CNC Training',
-      gradientColors: ['#FF8A00', '#FF3D00'] as const, // Same orange-red gradient
-    },
-    {
-      id: 4,
-      icon: 'wifi',
-      title: 'IoT Solutions',
-      gradientColors: ['#FF8A00', '#FF3D00'] as const, // Same orange-red gradient
-    },
-    {
-      id: 5,
-      icon: 'cart',
-      title: 'Maintenance',
-      gradientColors: ['#FF8A00', '#FF3D00'] as const, // Same orange-red gradient
-    },
+  // Fetch services from CMS
+  const { services, loading, error } = useServices();
+
+  // Fallback services if CMS data is not available
+  const fallbackServices: ServiceData[] = [
+    
   ];
 
-  const handleServicePress = (serviceId: number) => {
-    console.log('Service pressed:', serviceId);
-    // TODO: Navigate to service details
+
+
+  const handleServicePress = async (service: ServiceData) => {
+    try {
+      // Construct the service URL using the correct format
+      const serviceUrl = `https://www.sahilcnc.com/industries/services/${service.slug}`;
+      
+      // Check if the URL can be opened
+      const canOpen = await Linking.canOpenURL(serviceUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(serviceUrl);
+      } else {
+        console.log('Cannot open URL:', serviceUrl);
+        // Fallback: open main website
+        await Linking.openURL('https://www.sahilcnc.com');
+      }
+    } catch (error) {
+      console.error('Error opening service URL:', error);
+      // Fallback: open main website
+      try {
+        await Linking.openURL('https://www.sahilcnc.com');
+      } catch (fallbackError) {
+        console.error('Error opening fallback URL:', fallbackError);
+      }
+    }
   };
+
+  // Show skeleton loading state while loading
+  if (loading) {
+    return <ServicesSectionSkeleton />;
+  }
+
+  // Show error state only if there's an error and no data
+  if (error && services.length === 0) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Ionicons name="alert-circle" size={48} color={COLORS.error} />
+        <ResponsiveText size="bodyMedium" color="textSecondary" style={styles.errorText}>
+          Unable to load services
+        </ResponsiveText>
+      </View>
+    );
+  }
+
+  // Determine which services to display
+  const displayServices: ServiceData[] = services.length > 0 ? services : fallbackServices;
+  console.log('Display services:', displayServices, "services", services, services.length, "loading:", loading);
 
   return (
     <View style={styles.container}>
@@ -82,13 +121,14 @@ const ServicesSection: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {services.map((service) => (
+        {displayServices.map((service: ServiceData) => (
           <ServiceCard
             key={service.id}
             icon={service.icon}
+            iconUrl={service.iconUrl}
             title={service.title}
-            gradientColors={service.gradientColors}
-            onPress={() => handleServicePress(service.id)}
+            gradientColors={['#FF8A00', '#FF3D00'] as const} // Fixed gradient for all services
+            onPress={() => handleServicePress(service)}
           />
         ))}
       </ScrollView>
@@ -124,8 +164,20 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     alignItems: 'center', // Ensure icon is centered
   },
+  iconImage: {
+    width: 28,
+    height: 28,
+  },
   title: {
     textAlign: 'center', // Ensure text is centered
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  errorText: {
+    marginTop: SPACING.sm,
   },
 });
 
