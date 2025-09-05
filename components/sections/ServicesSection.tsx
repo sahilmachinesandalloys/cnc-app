@@ -24,7 +24,6 @@ interface ServiceData {
 }
 
 const ServiceCard: React.FC<ServiceCardProps> = ({ icon, iconUrl, title, gradientColors, onPress }) => {
-  console.log('ServiceCard render - icon:', icon, 'iconUrl:', iconUrl, 'title:', title);
   return (
     <TouchableOpacity style={styles.serviceCard} onPress={onPress}>
       <LinearGradient
@@ -111,7 +110,6 @@ const ServicesSection: React.FC = () => {
 
   // Determine which services to display
   const displayServices: ServiceData[] = services.length > 0 ? services : fallbackServices;
-  console.log('Display services:', displayServices, "services", services, services.length, "loading:", loading);
 
   return (
     <View style={styles.container}>

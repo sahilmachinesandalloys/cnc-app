@@ -1,44 +1,32 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, Linking } from 'react-native';
+
 import { Ionicons } from '@expo/vector-icons';
 import { ResponsiveText } from '../ui';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
+import { useFeaturedProductsApollo } from '../../hooks/useGraphQL';
+import FeaturedProductsSectionSkeleton from '../ui/FeaturedProductsSectionSkeleton';
+import { useRouter } from 'expo-router';
 
 interface ProductCardProps {
   id: number;
   image: any;
   category: string;
-  title: string;
   onPress: () => void;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ image, category, title, onPress }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ image, category, onPress }) => {
   return (
     <TouchableOpacity style={styles.productCard} onPress={onPress}>
       {/* Product Image */}
       <View style={styles.imageContainer}>
-        <Image source={image} style={styles.productImage} resizeMode="cover" />
-        
-        {/* Category Tag Overlay */}
-        <View style={styles.categoryTag}>
-          <LinearGradient
-            colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.gradientTag}
-          >
-            <ResponsiveText size="caption" color="textInverse" weight="medium">
-              {category}
-            </ResponsiveText>
-          </LinearGradient>
-        </View>
+        <Image source={image} style={styles.productImage} resizeMode="contain" />
       </View>
       
       {/* Product Info */}
       <View style={styles.productInfo}>
         <ResponsiveText size="bodySmall" color="textPrimary" weight="bold" style={styles.productTitle}>
-          {title}
+          {category}
         </ResponsiveText>
         
         <TouchableOpacity style={styles.detailsLink}>
@@ -56,52 +44,108 @@ const FeaturedProductsSection: React.FC = () => {
   const { width: screenWidth } = Dimensions.get('window');
   const cardWidth = (screenWidth - (SPACING.md * 3)) / 2; // 2 columns with margins
 
-  const products = [
+  // Fetch featured products from CMS
+  const { featuredProducts, loading, error, isEmpty } = useFeaturedProductsApollo();
+
+
+
+  // Fallback products if CMS data is not available
+  const fallbackProducts = [
     {
       id: 1,
-      image: require('../../assets/banner.png'), // Using existing banner as placeholder
+      image: require('../../assets/banner.png'),
       category: 'Milling',
       title: 'CNC Vertical Milling Machine',
     },
     {
       id: 2,
-      image: require('../../assets/banner.png'), // Using existing banner as placeholder
+      image: require('../../assets/banner.png'),
       category: 'Boring',
       title: 'CNC Boring Milling Machine',
     },
     {
       id: 3,
-      image: require('../../assets/banner.png'), // Using existing banner as placeholder
+      image: require('../../assets/banner.png'),
       category: 'Boring',
       title: 'CNC Floor Boring Machine',
     },
     {
       id: 4,
-      image: require('../../assets/banner.png'), // Using existing banner as placeholder
+      image: require('../../assets/banner.png'),
       category: 'Lathe',
       title: 'CNC Lathe Bed Type Machine',
     },
   ];
 
-  const handleProductPress = (productId: number) => {
-    console.log('Product pressed:', productId);
-    // TODO: Navigate to product details
+  // Use CMS data if available, otherwise use fallback
+  const products = featuredProducts.length > 0 ? featuredProducts : fallbackProducts;
+
+
+  const handleProductPress = async (product: any) => {
+    try {
+      const productUrl = `https://www.sahilcnc.com/products/${product.slug}`;
+      
+      // Check if the URL can be opened
+      const canOpen = await Linking.canOpenURL(productUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(productUrl);
+      } else {
+        console.log('Cannot open URL:', productUrl);
+        // Fallback: open main website
+        await Linking.openURL('https://www.sahilcnc.com');
+      }
+    } catch (error) {
+      console.error('Error opening product URL:', error);
+      // Fallback: open main website
+      try {
+        await Linking.openURL('https://www.sahilcnc.com');
+      } catch (fallbackError) {
+        console.error('Error opening fallback URL:', fallbackError);
+      }
+    }
   };
+
+  const router = useRouter();
 
   const handleViewAllPress = () => {
-    console.log('View All pressed');
-    // TODO: Navigate to all products page
+    router.push('/categories');
   };
 
-  const renderProductCard = ({ item }: { item: any }) => (
-    <ProductCard
-      id={item.id}
-      image={item.image}
-      category={item.category}
-      title={item.title}
-      onPress={() => handleProductPress(item.id)}
-    />
-  );
+  const renderProductCard = ({ item }: { item: any }) => {
+    // Handle both CMS data and fallback data
+    const imageSource = item.thumbnailUrl 
+      ? { uri: item.thumbnailUrl }
+      : item.image || require('../../assets/banner.png');
+    
+    const category = item.category?.title || item.category || 'Uncategorized';
+
+    return (
+      <ProductCard
+        id={item.id}
+        image={imageSource}
+        category={category}
+        onPress={() => handleProductPress(item)}
+      />
+    );
+  };
+
+  // Show skeleton loading state
+  if (loading) {
+    return <FeaturedProductsSectionSkeleton />;
+  }
+
+  // Show error state
+  if (error && isEmpty) {
+    return (
+      <View style={[styles.container, styles.errorContainer]}>
+        <Ionicons name="alert-circle" size={48} color={COLORS.error} />
+        <ResponsiveText size="bodyMedium" color="textSecondary" style={styles.errorText}>
+          Unable to load featured products
+        </ResponsiveText>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -112,9 +156,9 @@ const FeaturedProductsSection: React.FC = () => {
         </ResponsiveText>
         
         <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllPress}>
-          <ResponsiveText size="bodySmall" color="primary" weight="medium">
-            View All
-          </ResponsiveText>
+                  <ResponsiveText size="bodySmall" color="primary" weight="medium">
+          All Products
+        </ResponsiveText>
           <Ionicons name="arrow-forward" size={14} color={COLORS.primary} style={styles.viewAllArrow} />
         </TouchableOpacity>
       </View>
@@ -161,31 +205,22 @@ const styles = StyleSheet.create({
   productCard: {
     width: (Dimensions.get('window').width - (SPACING.md * 3)) / 2,
     backgroundColor: COLORS.white,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.sm,
     overflow: 'hidden',
-    ...SHADOWS.lg, // Enhanced shadow for better card appearance
+    ...SHADOWS.md, // Reduced shadow for subtle appearance
     borderWidth: 1,
     borderColor: COLORS.gray[100], // Subtle border
   },
   imageContainer: {
     position: 'relative',
-    height: 100, // Reduced height
+    height: 120,
+    paddingVertical: SPACING.sm, // Reduced vertical padding to allow more horizontal space
   },
   productImage: {
     width: '100%',
     height: '100%',
   },
-  categoryTag: {
-    position: 'absolute',
-    top: SPACING.xs, // Reduced padding
-    left: SPACING.xs, // Reduced padding
-    borderRadius: BORDER_RADIUS.sm, // Smaller radius
-    overflow: 'hidden',
-  },
-  gradientTag: {
-    paddingHorizontal: SPACING.xs, // Reduced padding
-    paddingVertical: SPACING.xs / 2, // Reduced padding
-  },
+
   productInfo: {
     padding: SPACING.sm, // Reduced padding
   },
@@ -200,6 +235,14 @@ const styles = StyleSheet.create({
   },
   arrow: {
     marginLeft: SPACING.xs / 2, // Reduced margin
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  errorText: {
+    marginTop: SPACING.sm,
   },
 });
 

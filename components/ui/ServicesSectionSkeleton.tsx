@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Skeleton } from './index';
+import Skeleton from './Skeleton';
 import { SPACING, BORDER_RADIUS } from '../../constants';
 
 const ServicesSectionSkeleton: React.FC = () => {

@@ -131,3 +131,103 @@ export const RESPONSE_FRAGMENT = gql`
   ${POST_FRAGMENT}
   ${META_FRAGMENT}
 `;
+
+// HomePageData fragment matching the web version
+export const HOMEPAGE_DATA_FRAGMENT = gql`
+  fragment HomePageData on StrapiHomePage {
+    Banner {
+      Title
+      Description
+      Background {
+        url
+        ext
+      }
+      ActionButton {
+        Name
+        URL
+      }
+      products {
+        id
+        Title
+        Slug
+        Thumbnail {
+          url
+        }
+        SubCategory: Category {
+          Title
+          Category {
+            Title
+            Slug
+          }
+          Slug
+        }
+      }
+    }
+    CategorySection {
+      Title
+      Description
+      id
+      Categories {
+        id
+        Title
+        ShortDescription
+        PreviewIcon {
+          url
+        }
+        Slug
+      }
+    }
+    Discover {
+      Title
+      HighlightedText
+      ContentBlock1 {
+        Title
+        Description
+        RedirectURL
+      }
+      ContentBlock2 {
+        Title
+        Description
+        RedirectURL
+      }
+      Stats {
+        id
+        Number
+        Info
+      }
+    }
+    WorkpieceByIndustriesSection {
+      Title
+      Description
+      Image {
+        url
+      }
+      Industries {
+        id
+        Title
+        Description
+        Slug
+        Image {
+          url
+        }
+      }
+    }
+    FAQSection {
+      Title
+      Thumbnail {
+        url
+      }
+      Description
+      faqs {
+        id
+        Question
+        Answer
+      }
+    }
+    Clients {
+      id
+      url
+    }
+    FooterContent
+  }
+`;

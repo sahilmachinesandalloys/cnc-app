@@ -2,7 +2,8 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ResponsiveText } from '../ui';
-import { COLORS, SPACING, BORDER_RADIUS } from '../../constants';
+import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
+import { useLegacyOfInnovation } from '../../hooks/useGraphQL';
 
 interface MetricCardProps {
   number: string;
@@ -10,9 +11,6 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ number, label }) => {
-  // Use smaller text for the third card (5000+ Satisfied Customers)
-  const isThirdCard = label === 'Satisfied Customers';
-  
   return (
     <View style={styles.metricCard}>
       <LinearGradient
@@ -22,7 +20,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ number, label }) => {
         style={styles.gradientBackground}
       >
         <ResponsiveText 
-          size={isThirdCard ? "headlineMedium" : "headlineLarge"} 
+          size="titleMedium" 
           color="textInverse" 
           weight="bold" 
           style={styles.number}
@@ -30,7 +28,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ number, label }) => {
           {number}
         </ResponsiveText>
         <ResponsiveText 
-          size={isThirdCard ? "bodySmall" : "bodyMedium"} 
+          size="bodySmall" 
           color="textInverse" 
           weight="medium" 
           style={styles.label}
@@ -43,31 +41,72 @@ const MetricCard: React.FC<MetricCardProps> = ({ number, label }) => {
 };
 
 const LegacyOfInnovationSection: React.FC = () => {
-  const metrics = [
-    { number: '60+', label: 'CNC Machines' },
-    { number: '20+', label: 'Years Experience' },
-    { number: '5000+', label: 'Satisfied Customers' },
-  ];
+  // Fetch data from CMS
+  const { legacyData, loading, error } = useLegacyOfInnovation();
+
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ResponsiveText size="bodyMedium" color="textSecondary">
+            Loading...
+          </ResponsiveText>
+        </View>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <ResponsiveText size="bodyMedium" color="error">
+            Unable to load content
+          </ResponsiveText>
+        </View>
+      </View>
+    );
+  }
+
+  // Use CMS data if available, otherwise show fallback
+  const displayData = legacyData || {
+    Title: "Discover the legacy of innovation at",
+    HighlightedText: "Sahil Machines",
+    Stats: [
+      { Number: "60+", Info: "Years of Legacy" },
+      { Number: "20+", Info: "Countries Served" },
+      { Number: "5000+", Info: "Machine Installations" }
+    ]
+  };
 
   return (
     <View style={styles.container}>
       {/* Section Header */}
       <View style={styles.header}>
-        <ResponsiveText size="headlineMedium" color="textPrimary" weight="bold" style={styles.title}>
-          Legacy of Innovation
+        <ResponsiveText size="titleMedium" color="textPrimary" weight="bold" style={styles.title}>
+          {displayData.Title}
+          <ResponsiveText size="titleMedium" color="primary" weight="bold">
+            {' '}{displayData.HighlightedText}
+          </ResponsiveText>
         </ResponsiveText>
-        <ResponsiveText size="bodyMedium" color="textSecondary" style={styles.subtitle}>
-          Trusted by thousands worldwide
+      </View>
+
+      {/* Description Text */}
+      <View style={styles.descriptionContainer}>
+        <ResponsiveText size="bodySmall" color="textSecondary" style={styles.description}>
+          Driven by a vision to transform the company into a temple of technology through teamwork, Sahil Alloys & Machine Tools has continually evolved. Continuous process improvement and the adoption of cutting-edge technology have led Sahil Alloys & Machine Tools to become one of the world's leading manufacturers of CNC machines, with a significant market share both in India and globally.
         </ResponsiveText>
       </View>
 
       {/* Metric Cards */}
       <View style={styles.metricsContainer}>
-        {metrics.map((metric, index) => (
+        {displayData.Stats.map((stat: any, index: number) => (
           <MetricCard
-            key={index}
-            number={metric.number}
-            label={metric.label}
+            key={stat.id || index}
+            number={stat.Number}
+            label={stat.Info}
           />
         ))}
       </View>
@@ -78,49 +117,59 @@ const LegacyOfInnovationSection: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm, // Reduced gap
-    paddingBottom: SPACING.sm, // Reduced gap
-    backgroundColor: '#fff', // Light gray background to match Featured Products
+    paddingVertical: SPACING.lg,
+    backgroundColor: COLORS.white,
   },
   header: {
     alignItems: 'center',
-    marginBottom: SPACING.md, // Increased gap
+    marginBottom: SPACING.xl,
   },
   title: {
     textAlign: 'center',
-    marginBottom: SPACING.sm, // Increased gap
+    lineHeight: 28,
   },
-  subtitle: {
+  descriptionContainer: {
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.sm,
+  },
+  description: {
     textAlign: 'center',
+    lineHeight: 22,
   },
   metricsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: SPACING.sm, // Increased gap
+    gap: SPACING.sm,
   },
   metricCard: {
     flex: 1,
-    height: 120, // Increased height for better appearance
+    height: 120,
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...SHADOWS.md,
   },
   gradientBackground: {
-    flex: 1, // Take full height of parent
-    padding: SPACING.md, // Increased padding
+    flex: 1,
+    padding: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   number: {
     textAlign: 'center',
-    marginBottom: SPACING.sm, // Increased margin
+    marginBottom: SPACING.sm,
   },
   label: {
     textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
   },
 });
 

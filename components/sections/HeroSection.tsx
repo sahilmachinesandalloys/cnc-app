@@ -49,9 +49,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onBookNowPress }) => {
   // Use CMS data if available, otherwise use fallback
   const slides: SlideData[] = heroSections.length > 0 ? heroSections : fallbackSlides;
   
-  // Debug: Log the number of slides and their content
-  console.log('HeroSection - Number of slides:', slides.length);
-  console.log('HeroSection - Slides data:', slides);
+
 
   const handleScroll = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset.x;
@@ -61,8 +59,6 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onBookNowPress }) => {
     // Ensure index is within bounds
     const clampedIndex = Math.max(0, Math.min(index, slides.length - 1));
     setCurrentIndex(clampedIndex);
-    
-    console.log('Scroll - contentOffset:', contentOffset, 'slideWidth:', slideWidth, 'calculated index:', index, 'clamped index:', clampedIndex);
   };
 
   const scrollToIndex = (index: number) => {
@@ -184,22 +180,19 @@ const HeroSection: React.FC<HeroSectionProps> = ({ onBookNowPress }) => {
 
 
 
-          {/* Pagination Dots - Inside the Card */}
-          <View style={styles.pagination}>
-            {slides.map((_, index) => {
-              console.log('Rendering dot for index:', index, 'Total slides:', slides.length);
-              return (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dot,
-                    currentIndex === index && styles.activeDot
-                  ]}
-                  onPress={() => scrollToIndex(index)}
-                />
-              );
-            })}
-          </View>
+                     {/* Pagination Dots - Inside the Card */}
+           <View style={styles.pagination}>
+             {slides.map((_, index) => (
+               <TouchableOpacity
+                 key={index}
+                 style={[
+                   styles.dot,
+                   currentIndex === index && styles.activeDot
+                 ]}
+                 onPress={() => scrollToIndex(index)}
+               />
+             ))}
+           </View>
         </View>
       </View>
     </View>

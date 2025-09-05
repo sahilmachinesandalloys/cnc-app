@@ -1,51 +1,102 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ResponsiveText } from '../ui';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
+import { useFAQSection } from '../../hooks/useGraphQL';
 
 interface FAQItem {
-  id: number;
+  id: string;
   question: string;
   answer: string;
 }
 
 const FAQSection: React.FC = () => {
-  const [expandedId, setExpandedId] = useState<number | null>(1); // First item expanded by default
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  
+  // Fetch FAQ data from CMS
+  const { faqData, loading, error } = useFAQSection();
 
-  const faqItems: FAQItem[] = [
-    {
-      id: 1,
-      question: 'How can I optimize the performance of a CNC machining center?',
-      answer: 'Optimization involves proper programming, tool selection, cutting parameters, workholding solutions, and regular calibration to maintain peak performance.',
-    },
-    {
-      id: 2,
-      question: 'What is CNC and how does it benefit manufacturing?',
-      answer: 'CNC (Computer Numerical Control) is a manufacturing process that uses computerized controls to operate and manipulate machine tools. It provides precision, consistency, and efficiency in manufacturing operations.',
-    },
-    {
-      id: 3,
-      question: 'How do I improve machine performance and longevity?',
-      answer: 'Regular maintenance, proper lubrication, timely calibration, and following manufacturer guidelines are key to improving machine performance and extending its lifespan.',
-    },
-    {
-      id: 4,
-      question: 'What are the CNC machine tolerance capabilities?',
-      answer: 'CNC machines can achieve tolerances as tight as ±0.001 inches (0.025mm) depending on the machine type, material, and cutting conditions.',
-    },
-  ];
-
-  const toggleExpanded = (id: number) => {
+  const toggleExpanded = (id: string) => {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ResponsiveText size="bodyMedium" color="textSecondary">
+            Loading FAQs...
+          </ResponsiveText>
+        </View>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <ResponsiveText size="bodyMedium" color="error">
+            Unable to load FAQs
+          </ResponsiveText>
+        </View>
+      </View>
+    );
+  }
+
+  // Use CMS data
+  const displayData = faqData;
+
+  // Transform CMS data to component format
+  const faqItems: FAQItem[] = displayData?.faqs?.map(faq => ({
+    id: faq.id,
+    question: faq.attributes?.Question || faq.Question || '',
+    answer: faq.attributes?.Answer || faq.Answer || '',
+  })) || [];
+
+  // If no data, show empty state
+  if (!displayData) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.errorContainer}>
+          <ResponsiveText size="bodyMedium" color="textSecondary">
+            No FAQ data available
+          </ResponsiveText>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <ResponsiveText size="titleMedium" color="textPrimary" weight="bold" style={styles.title}>
-        Frequently Asked Questions
-      </ResponsiveText>
+      {/* Section Header */}
+      <View style={styles.header}>
+        <ResponsiveText size="titleMedium" color="textPrimary" weight="bold" style={styles.title}>
+          {displayData.Title}
+        </ResponsiveText>
+        
+        {displayData.Description && (
+          <ResponsiveText size="bodySmall" color="textSecondary" style={styles.description}>
+            {displayData.Description}
+          </ResponsiveText>
+        )}
+      </View>
+
+      {/* Thumbnail Image (if available) */}
+      {displayData.Thumbnail && (
+        <View style={styles.thumbnailContainer}>
+          <Image 
+            source={{ uri: displayData.Thumbnail }} 
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        </View>
+      )}
       
+      {/* FAQ List */}
       <View style={styles.faqList}>
         {faqItems.map((item) => (
           <TouchableOpacity
@@ -85,8 +136,29 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.lg,
     backgroundColor: COLORS.white,
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
   title: {
-    marginBottom: SPACING.md,
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
+  },
+  description: {
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  thumbnailContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    height: 300, // Increased container height
+    overflow: 'hidden', // Clip the image to container
+    borderRadius: BORDER_RADIUS.md,
+  },
+  thumbnail: {
+    width: '100%',
+    height: 400, // Even taller image to show more content
+    borderRadius: BORDER_RADIUS.md,
   },
   faqList: {
     gap: SPACING.sm,
@@ -115,6 +187,16 @@ const styles = StyleSheet.create({
   },
   answer: {
     lineHeight: 16,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
   },
 });
 

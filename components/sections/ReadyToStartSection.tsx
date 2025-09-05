@@ -1,24 +1,29 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { ResponsiveText } from '../ui';
+import { ResponsiveText, QuoteModal } from '../ui';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
 
 const ReadyToStartSection: React.FC = () => {
+  const [isQuoteModalVisible, setIsQuoteModalVisible] = useState(false);
+
   const handleGetQuotePress = () => {
-    console.log('Get Quote Now pressed');
-    // TODO: Navigate to quote form or call
+    setIsQuoteModalVisible(true);
   };
 
-  const handleEmailPress = () => {
-    console.log('Email pressed');
-    // TODO: Open email client
-  };
-
-  const handleVisitPress = () => {
-    console.log('Visit pressed');
-    // TODO: Navigate to location/map
+  const handleVisitPress = async () => {
+    const url = 'https://www.sahilcnc.com/';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Error', 'Cannot open website link');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to open website');
+    }
   };
 
   return (
@@ -48,24 +53,21 @@ const ReadyToStartSection: React.FC = () => {
             </LinearGradient>
           </TouchableOpacity>
           
-          {/* Secondary Buttons Row */}
-          <View style={styles.secondaryButtonsRow}>
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleEmailPress}>
-              <Ionicons name="mail" size={16} color={COLORS.gray[600]} style={styles.buttonIcon} />
-              <ResponsiveText size="caption" color="textPrimary" weight="medium">
-                Email
-              </ResponsiveText>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleVisitPress}>
-              <Ionicons name="location" size={16} color={COLORS.gray[600]} style={styles.buttonIcon} />
-              <ResponsiveText size="caption" color="textPrimary" weight="medium">
-                Visit
-              </ResponsiveText>
-            </TouchableOpacity>
-          </View>
+          {/* Secondary Button */}
+          <TouchableOpacity style={styles.secondaryButton} onPress={handleVisitPress}>
+            <Ionicons name="globe" size={16} color={COLORS.gray[600]} style={styles.buttonIcon} />
+            <ResponsiveText size="caption" color="textPrimary" weight="medium">
+              Visit Website
+            </ResponsiveText>
+          </TouchableOpacity>
         </View>
       </View>
+      
+      {/* Quote Modal */}
+      <QuoteModal 
+        visible={isQuoteModalVisible}
+        onClose={() => setIsQuoteModalVisible(false)}
+      />
     </View>
   );
 };
@@ -102,6 +104,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     overflow: 'hidden',
     ...SHADOWS.md,
+    height: 48, // Fixed height for consistency
   },
   gradientButton: {
     flexDirection: 'row',
@@ -109,22 +112,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-  },
-  secondaryButtonsRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+    height: '100%', // Fill the parent height
   },
   secondaryButton: {
-    flex: 1,
     backgroundColor: COLORS.white,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md, // Same padding as primary
+    paddingHorizontal: SPACING.lg, // Same padding as primary
     borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.gray[200],
+    height: 48, // Same height as primary button
   },
   buttonIcon: {
     marginRight: SPACING.xs,

@@ -1,21 +1,102 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import ResponsiveText from './ResponsiveText';
-import { COLORS, SPACING, BORDER_RADIUS } from '../../constants';
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Linking,
+  ScrollView,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import ResponsiveText from "./ResponsiveText";
+import { COLORS, SPACING, BORDER_RADIUS } from "../../constants";
 
 interface DrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+interface NavLink {
+  href: string;
+  name: string;
+  submenu?: { href: string; name: string }[];
+}
+
+const navLinks: NavLink[] = [
+  {
+    href: "/industries",
+    name: "INDUSTRIES",
+    submenu: [
+      {
+        href: "/industries/services",
+        name: "Services",
+      },
+      {
+        href: "/industries/workpiece-by-industry",
+        name: "Industries we cater to",
+      },
+      {
+        href: "/accuracy-cube",
+        name: "Accuracy Cube",
+      },
+      {
+        href: "/accessories",
+        name: "Accessories",
+      },
+    ],
+  },
+  {
+    href: "/resources",
+    name: "RESOURCES",
+    submenu: [
+      { href: "/events", name: "Events" },
+      { href: "/blogs/1", name: "Blogs" },
+      { href: "/case-studies", name: "Case Studies" },
+      { href: "/guides", name: "Guides" },
+      { href: "/whitepaper", name: "Whitepaper" },
+      { href: "/technical-press-news", name: "Technical Press News" },
+      { href: "/faqs", name: "FAQs" },
+    ],
+  },
+  {
+    href: "/about",
+    name: "ABOUT US",
+    submenu: [
+      {
+        href: "/about",
+        name: "Our Vision",
+      },
+      {
+        href: "/about/social-responsibility",
+        name: "Corporate social responsibility",
+      },
+      {
+        href: "/about/managements",
+        name: "Managements",
+      },
+      {
+        href: "/about/message-from-cmd",
+        name: "Message From CMD",
+      },
+      {
+        href: "/about/quality-standards-and-infrastructure",
+        name: "Quality Standards & Infrastructure",
+      },
+    ],
+  },
+  { href: "/sales-and-services", name: "SALES & SERVICES" },
+  { href: "/contact-us", name: "CONTACT US" },
+];
+
+const { width: screenWidth } = Dimensions.get("window");
 const DRAWER_WIDTH = screenWidth * 0.8;
 
 const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose }) => {
   const translateX = React.useRef(new Animated.Value(-DRAWER_WIDTH)).current;
   const overlayOpacity = React.useRef(new Animated.Value(0)).current;
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   React.useEffect(() => {
     if (isOpen) {
@@ -47,14 +128,38 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  const menuItems = [
-    { icon: 'cube-outline', title: 'PRODUCTS', onPress: () => console.log('Products pressed') },
-    { icon: 'business-outline', title: 'INDUSTRIES', onPress: () => console.log('Industries pressed') },
-    { icon: 'library-outline', title: 'RESOURCES', onPress: () => console.log('Resources pressed') },
-    { icon: 'people-outline', title: 'ABOUT US', onPress: () => console.log('About Us pressed') },
-    { icon: 'construct-outline', title: 'SALES & SERVICES', onPress: () => console.log('Sales & Services pressed') },
-    { icon: 'call-outline', title: 'CONTACT US', onPress: () => console.log('Contact Us pressed') },
-  ];
+  const toggleExpanded = (itemName: string) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(itemName)) {
+      newExpanded.delete(itemName);
+    } else {
+      newExpanded.add(itemName);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const handleLinkPress = (href: string) => {
+    const fullUrl = `https://www.sahilcnc.com${href}`;
+    Linking.openURL(fullUrl);
+    onClose();
+  };
+
+  const getIconForItem = (name: string) => {
+    switch (name) {
+      case "INDUSTRIES":
+        return "business-outline";
+      case "RESOURCES":
+        return "library-outline";
+      case "ABOUT US":
+        return "people-outline";
+      case "SALES & SERVICES":
+        return "construct-outline";
+      case "CONTACT US":
+        return "call-outline";
+      default:
+        return "cube-outline";
+    }
+  };
 
   return (
     <>
@@ -87,7 +192,11 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose }) => {
           style={styles.drawerHeader}
         >
           <View style={styles.headerContent}>
-            <ResponsiveText size="headlineMedium" color="textInverse" weight="bold">
+            <ResponsiveText
+              size="headlineMedium"
+              color="textInverse"
+              weight="bold"
+            >
               Sahil Machines
             </ResponsiveText>
             <ResponsiveText size="bodyMedium" color="textInverse">
@@ -100,36 +209,92 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose }) => {
         </LinearGradient>
 
         {/* Menu Items */}
-        <View style={styles.menuContainer}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.menuItem}
-              onPress={() => {
-                item.onPress();
-                onClose();
-              }}
-            >
-              <View style={styles.menuItemContent}>
-                <Ionicons name={item.icon as any} size={24} color={COLORS.textPrimary} />
-                <ResponsiveText size="bodyMedium" color="textPrimary" weight="medium">
-                  {item.title}
-                </ResponsiveText>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
-            </TouchableOpacity>
+        <ScrollView style={styles.menuContainer}>
+          {navLinks.map((item, index) => (
+            <View key={index}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => {
+                  if (item.submenu) {
+                    toggleExpanded(item.name);
+                  } else {
+                    handleLinkPress(item.href);
+                  }
+                }}
+              >
+                <View style={styles.menuItemContent}>
+                  <Ionicons
+                    name={getIconForItem(item.name) as any}
+                    size={24}
+                    color={COLORS.textPrimary}
+                  />
+                  <ResponsiveText
+                    size="bodyMedium"
+                    color="textPrimary"
+                    weight="medium"
+                  >
+                    {item.name}
+                  </ResponsiveText>
+                </View>
+                {item.submenu ? (
+                  <Ionicons
+                    name={
+                      expandedItems.has(item.name)
+                        ? "chevron-down"
+                        : "chevron-forward"
+                    }
+                    size={20}
+                    color={COLORS.textSecondary}
+                  />
+                ) : (
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={COLORS.textSecondary}
+                  />
+                )}
+              </TouchableOpacity>
+
+              {/* Submenu */}
+              {item.submenu && expandedItems.has(item.name) && (
+                <View style={styles.submenuContainer}>
+                  {item.submenu.map((subItem, subIndex) => (
+                    <TouchableOpacity
+                      key={subIndex}
+                      style={styles.submenuItem}
+                      onPress={() => handleLinkPress(subItem.href)}
+                    >
+                      <ResponsiveText
+                        size="bodySmall"
+                        color="textSecondary"
+                        weight="medium"
+                      >
+                        {subItem.name}
+                      </ResponsiveText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           ))}
-        </View>
+        </ScrollView>
 
         {/* Footer */}
         <View style={styles.drawerFooter}>
-          <TouchableOpacity style={styles.footerButton}>
+          <TouchableOpacity
+            style={styles.footerButton}
+            onPress={() => Linking.openURL("tel:+918427641925")}
+          >
             <LinearGradient
               colors={[COLORS.gradientStart, COLORS.gradientEnd]}
               style={styles.footerGradient}
             >
               <Ionicons name="call-outline" size={20} color="white" />
-              <ResponsiveText size="bodyMedium" color="textInverse" weight="medium">
+              <ResponsiveText
+                size="bodyMedium"
+                color="textInverse"
+                weight="medium"
+              >
                 Call Now
               </ResponsiveText>
             </LinearGradient>
@@ -142,26 +307,26 @@ const Drawer: React.FC<DrawerProps> = ({ isOpen, onClose }) => {
 
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#000',
+    backgroundColor: "#000",
     zIndex: 1000,
   },
   overlayTouch: {
     flex: 1,
   },
   drawer: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: DRAWER_WIDTH,
-    height: '100%',
-    backgroundColor: 'white',
+    height: "100%",
+    backgroundColor: "white",
     zIndex: 1001,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 2, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -177,7 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   closeButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 60,
     right: SPACING.md,
     padding: SPACING.xs,
@@ -187,17 +352,17 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.gray[100],
   },
   menuItemContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.md,
   },
   drawerFooter: {
@@ -207,14 +372,24 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     borderRadius: BORDER_RADIUS.md,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   footerGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: SPACING.sm,
     paddingVertical: SPACING.md,
+  },
+  submenuContainer: {
+    backgroundColor: COLORS.gray[50],
+    paddingLeft: SPACING.xl,
+  },
+  submenuItem: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[100],
   },
 });
 

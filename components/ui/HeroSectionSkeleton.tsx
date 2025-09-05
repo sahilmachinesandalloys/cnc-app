@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Skeleton } from './index';
+import Skeleton from './Skeleton';
 import { COLORS, SPACING, BORDER_RADIUS, SHADOWS } from '../../constants';
 
 const { width: screenWidth } = Dimensions.get('window');

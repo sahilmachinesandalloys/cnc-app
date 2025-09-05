@@ -18,7 +18,6 @@ import {
   GET_MOBILE_HERO_SECTIONS,
   GET_MOBILE_SERVICES,
   GET_SERVICE_BY_ID,
-  GET_LEGACY_OF_INNOVATION_DATA,
   
 } from '../graphql/queries';
 import { 
@@ -43,9 +42,6 @@ import {
   ServiceByIdVariables
 } from '../graphql/queries/services';
 import { GET_MOBILE_FEATURED_PRODUCTS, MobileFeaturedProductsResponse } from '../graphql/queries/featuredProducts';
-import { LegacyOfInnovationResponse } from '../graphql/queries/legacyOfInnovation';
-import { GET_FAQ_SECTION_DATA, FAQSectionResponse } from '../graphql/queries/faqSection';
-
 import React from 'react'; // Added for React.useState and React.useEffect
 import { getGraphQLUrl, getGraphQLHeaders } from '../graphql/config';
 
@@ -273,30 +269,116 @@ const getDefaultIcon = (title: string): string => {
   return 'construct';
 };
 
-// Featured Products hooks - Apollo Client version
-export const useFeaturedProductsApollo = () => {
-  const { data, loading, error, refetch } = useQuery<MobileFeaturedProductsResponse>(
-    GET_MOBILE_FEATURED_PRODUCTS,
-    {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+// Featured Products hooks - WORKING VERSION (BACKUP)
+export const fetchFeaturedProducts = async () => {
+  const endpoint = getGraphQLUrl();
+  const headers = getGraphQLHeaders();
 
-  // Transform data for easier consumption
-  const featuredProducts = data?.homePage?.data?.attributes?.Banner?.products?.data?.map((item) => ({
-    id: item.id,
-    title: item.attributes.Title,
-    slug: item.attributes.Slug,
-    tag: item.attributes.Tag,
-    thumbnailUrl: item.attributes.Thumbnail?.data?.attributes?.url || null,
-    category: {
-      id: item.attributes.Category?.data?.attributes?.Slug || 'default',
-      title: item.attributes.Category?.data?.attributes?.Title || 'Uncategorized',
-      slug: item.attributes.Category?.data?.attributes?.Slug || '',
-    },
-  })) || [];
+  const query = `
+    query MyQuery {
+      homePage {
+        data {
+          id
+          attributes {
+            Banner {
+              products {
+                data {
+                  id
+                  attributes {
+                    Title
+                    Slug
+                    Tag
+                    Category {
+                      data {
+                        attributes {
+                          Title
+                          Slug
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (result.errors) {
+      console.error("GraphQL Errors:", result.errors);
+      return [];
+    }
+
+    console.log("GraphQL Response:", result.data);
+    console.log("HomePage data:", JSON.stringify(result.data.homePage?.data, null, 2));
+    console.log("Attributes:", JSON.stringify(result.data.homePage?.data?.attributes, null, 2));
+    return result.data.homePage?.data ? [result.data.homePage] : [];
+  } catch (err) {
+    console.error("Fetch error:", err);
+    return [];
+  }
+};
+
+export const useFeaturedProducts = () => {
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<any>(null);
+  const [featuredProducts, setFeaturedProducts] = React.useState<any[]>([]);
+
+  const fetchData = React.useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const data = await fetchFeaturedProducts();
+      
+      // Debug the data structure
+      console.log("Data array:", data);
+      console.log("First item:", data?.[0]);
+      console.log("Attributes:", data?.[0]?.data?.attributes);
+      console.log("Banner:", data?.[0]?.data?.attributes?.Banner);
+      console.log("Products:", data?.[0]?.data?.attributes?.Banner?.products);
+      
+      // Transform the data to match our expected format
+      const transformedProducts = data?.[0]?.data?.attributes?.Banner?.products?.data?.map((item: any) => ({
+        id: item.id,
+        title: item.attributes.Title,
+        slug: item.attributes.Slug,
+        tag: item.attributes.Tag,
+        category: {
+          id: item.attributes.Category?.data?.attributes?.Slug || 'default',
+          title: item.attributes.Category?.data?.attributes?.Title || 'Uncategorized',
+          slug: item.attributes.Category?.data?.attributes?.Slug || '',
+        },
+      })) || [];
+
+      console.log('Transformed featuredProducts:', transformedProducts);
+      setFeaturedProducts(transformedProducts);
+    } catch (err) {
+      console.error('Error fetching featured products:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refetch = React.useCallback(() => {
+    fetchData();
+  }, [fetchData]);
 
   return {
     featuredProducts,
@@ -305,72 +387,6 @@ export const useFeaturedProductsApollo = () => {
     refetch,
     isEmpty: !loading && featuredProducts.length === 0,
     hasData: !loading && featuredProducts.length > 0,
-  };
-};
-
-
-
-// Legacy of Innovation section hook
-export const useLegacyOfInnovation = () => {
-  const { data, loading, error, refetch } = useQuery<LegacyOfInnovationResponse>(
-    GET_LEGACY_OF_INNOVATION_DATA,
-    {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
-      notifyOnNetworkStatusChange: true,
-    }
-  );
-
-  
-
-  // Transform data for easier consumption
-  const legacyData = data?.homePage?.data?.attributes?.Discover || null;
-
-  return {
-    legacyData,
-    loading,
-    error,
-    refetch,
-    isEmpty: !loading && !legacyData,
-    hasData: !loading && !!legacyData,
-  };
-};
-
-// FAQ Section hook using Apollo Client for consistency
-export const useFAQSection = () => {
-  const { data, loading, error, refetch } = useQuery<FAQSectionResponse>(
-    GET_FAQ_SECTION_DATA,
-    {
-      errorPolicy: 'all',
-      fetchPolicy: 'cache-and-network',
-      notifyOnNetworkStatusChange: true,
-    }
-  );
-
-
-
-  // Transform data for easier consumption
-  const faqData = data?.homePage?.data?.attributes?.FAQSection?.faqs?.data || null;
-
-  // Transform the data to include an index-based id for the component
-  const transformedFaqData = faqData && data?.homePage?.data?.attributes?.FAQSection ? {
-    Title: data.homePage.data.attributes.FAQSection.Title || "Frequently Asked Questions",
-    Description: data.homePage.data.attributes.FAQSection.Description || "Get your queries cleared",
-    Thumbnail: data.homePage.data.attributes.FAQSection.Thumbnail?.data?.attributes?.url || null,
-    faqs: faqData.map((faq: any, index: number) => ({
-      id: `faq-${index}`,
-      Question: faq.attributes.Question,
-      Answer: faq.attributes.Answer,
-    }))
-  } : null;
-
-  return {
-    faqData: transformedFaqData,
-    loading,
-    error,
-    refetch,
-    isEmpty: !loading && !transformedFaqData,
-    hasData: !loading && !!transformedFaqData,
   };
 };
 

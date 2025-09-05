@@ -44,6 +44,22 @@ const cache = new InMemoryCache({
         // Example: posts: { merge: false } // Don't merge, replace
       },
     },
+    HomePageEntity: {
+      keyFields: ['id'], // Use 'id' as the unique identifier
+      fields: {
+        attributes: {
+          merge: false, // Don't merge attributes, replace them
+        },
+      },
+    },
+    ComponentHomePageFaQsSection: {
+      keyFields: ['__typename'], // Use __typename as key since it's a component
+      fields: {
+        faqs: {
+          merge: false, // Don't merge faqs, replace them
+        },
+      },
+    },
   },
 });
 
