@@ -1,22 +1,23 @@
-import { Platform, StatusBar, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  useSharedValue, 
+import { Platform, StatusBar, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, {
+  useSharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   interpolate,
   Extrapolate,
-  interpolateColor
-} from 'react-native-reanimated';
-import { 
-  Header, 
-  HeroSection, 
-  ServicesSection, 
-  FeaturedProductsSection, 
-  FAQSection, 
+  interpolateColor,
+} from "react-native-reanimated";
+import {
+  Header,
+  HeroSection,
+  ServicesSection,
+  FeaturedProductsSection,
+  FAQSection,
+  ContactSection,
   ReadyToStartSection,
-  LegacyOfInnovationSection
-} from '../components';
+  LegacyOfInnovationSection,
+} from "../components";
 
 export const HEADER_MAX_HEIGHT = 120;
 
@@ -54,16 +55,16 @@ export default function HomePage() {
       [0, 0.2],
       Extrapolate.CLAMP
     );
-  
+
     const elevation = interpolate(
       scrollY.value,
       [0, 50],
       [0, 4],
       Extrapolate.CLAMP
     );
-  
+
     return {
-      backgroundColor: '#fff',
+      backgroundColor: "#fff",
       shadowOpacity,
       elevation: Math.round(elevation), // Android only
     };
@@ -71,33 +72,34 @@ export default function HomePage() {
 
   const handleMenuPress = () => {
     // This will be handled by the parent layout
-    console.log('Menu pressed - should open drawer');
+    console.log("Menu pressed - should open drawer");
   };
 
   const handleBookNowPress = () => {
-    console.log('Book Now pressed');
+    console.log("Book Now pressed");
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white' }}>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       <StatusBar
         translucent
-        backgroundColor={Platform.OS === "android" ? "rgba(0,0,0,0.6)" : "transparent"}
+        backgroundColor={
+          Platform.OS === "android" ? "rgba(0,0,0,0.6)" : "transparent"
+        }
         barStyle="dark-content"
       />
 
       {/* Animated Header */}
       <Animated.View style={[styles.header, headerStyle, bgAndShadowStyle]}>
         <View style={{ flex: 1, justifyContent: "center" }}>
-         
-        <Header onMenuPress={handleMenuPress} />
+          <Header onMenuPress={handleMenuPress} />
         </View>
       </Animated.View>
 
       {/* Scrollable Content */}
-      <MainContent 
-        scrollHandler={scrollHandler} 
-        onBookNowPress={handleBookNowPress} 
+      <MainContent
+        scrollHandler={scrollHandler}
+        onBookNowPress={handleBookNowPress}
       />
     </View>
   );
@@ -108,10 +110,13 @@ interface MainContentProps {
   onBookNowPress: () => void;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ scrollHandler, onBookNowPress }) => {
+const MainContent: React.FC<MainContentProps> = ({
+  scrollHandler,
+  onBookNowPress,
+}) => {
   return (
-    <Animated.ScrollView 
-      style={styles.container} 
+    <Animated.ScrollView
+      style={styles.container}
       contentContainerStyle={styles.scrollableContainer}
       showsVerticalScrollIndicator={false}
       onScroll={scrollHandler}
@@ -121,7 +126,8 @@ const MainContent: React.FC<MainContentProps> = ({ scrollHandler, onBookNowPress
       <ServicesSection />
       <FeaturedProductsSection />
       <LegacyOfInnovationSection />
-      <FAQSection />
+      {/* <FAQSection /> */}
+      <ContactSection />
       <ReadyToStartSection />
     </Animated.ScrollView>
   );
@@ -144,9 +150,9 @@ const styles = StyleSheet.create({
     height: HEADER_MAX_HEIGHT,
     zIndex: 10,
     paddingTop: 30,
-      // ✅ static shadow
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowRadius: 4,
+    // ✅ static shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
   },
 });

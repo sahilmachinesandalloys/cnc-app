@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "SahilCNCApp",
+    "name": "Sahil CNC",
     "slug": "SahilCNCApp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -22,14 +22,12 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sahin05.SahilCNCApp"
+      "package": "com.sahilmachines.SahilCNCApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-router"
-    ],
+    "plugins": ["expo-router"],
     "extra": {
       "EXPO_PUBLIC_STRAPI_URL": "https://admin.sahilcnc.com/graphql",
       "EXPO_PUBLIC_API_KEY": "642fa036209462c2f72a0f8087f0a81149b54c4ed6842e2368ee365a18aa0449b6b0282bc705887ac161a5217747037b55ce31613dd202be56ae07c70aa3f3325ec8767e6e84795d88f98927df7901c6ba1dbf751ddb1928177c7e219d26866add3a8f223faa07527f2f1338999e6fa40420a3e9044816055760e48e8871ba36",
@@ -38,6 +36,7 @@
       "eas": {
         "projectId": "1e4988e7-ec60-4209-ba4a-7a9d47b5bacb"
       }
-    }
+    },
+    "owner": "sahin05"
   }
 }

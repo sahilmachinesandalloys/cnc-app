@@ -6,18 +6,24 @@ import { apolloClient } from "../graphql";
 import { FloatingActionButton, Drawer, QuoteModal } from "../components/ui";
 import { DrawerProvider, useDrawer } from "../contexts/DrawerContext";
 import { loadFonts } from "../utils/fonts";
-import { useEffect, useState } from "react";
-import { View, ActivityIndicator, Linking, Alert } from "react-native";
+import { useEffect, useState, useCallback } from "react";
+import { Linking, Alert } from "react-native";
+import * as SplashScreen from "expo-splash-screen";
 import "react-native-gesture-handler";
 import * as Font from "expo-font";
 
+// Prevent the splash screen from auto-hiding before asset loading is complete
+SplashScreen.preventAutoHideAsync();
+
 function AppContent() {
   const { isDrawerOpen, closeDrawer } = useDrawer();
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [appIsReady, setAppIsReady] = useState(false);
+  const [isQuoteModalVisible, setIsQuoteModalVisible] = useState(false);
 
   useEffect(() => {
-    const loadAppFonts = async () => {
+    async function prepare() {
       try {
+        // Load fonts
         await loadFonts();
 
         // Check if fonts are actually loaded
@@ -26,12 +32,24 @@ function AppContent() {
       } catch (error) {
         console.error("Error loading fonts:", error);
       } finally {
-        setFontsLoaded(true);
+        // Tell the application to render
+        setAppIsReady(true);
       }
-    };
+    }
 
-    loadAppFonts();
+    prepare();
   }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      // Hide the splash screen once the app is ready
+      await SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
 
   const handleWhatsApp = async () => {
     const phoneNumber = "919815482343"; // WhatsApp number without +91
@@ -68,29 +86,12 @@ function AppContent() {
     }
   };
 
-  const [isQuoteModalVisible, setIsQuoteModalVisible] = useState(false);
-
   const handleContactForm = () => {
     setIsQuoteModalVisible(true);
   };
 
-  if (!fontsLoaded) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: COLORS.background,
-        }}
-      >
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider onLayout={onLayoutRootView}>
       <Stack
         screenOptions={{
           headerStyle: {
