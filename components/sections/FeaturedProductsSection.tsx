@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions, Linking } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, FlatList, Image, Dimensions } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { ResponsiveText } from '../ui';
@@ -49,30 +49,34 @@ const FeaturedProductsSection: React.FC = () => {
 
 
 
-  // Fallback products if CMS data is not available
+  // Fallback products if CMS data is not available (categorySlug for subcategory navigation)
   const fallbackProducts = [
     {
       id: 1,
       image: require('../../assets/banner.png'),
       category: 'Milling',
+      categorySlug: 'milling',
       title: 'CNC Vertical Milling Machine',
     },
     {
       id: 2,
       image: require('../../assets/banner.png'),
       category: 'Boring',
+      categorySlug: 'boring',
       title: 'CNC Boring Milling Machine',
     },
     {
       id: 3,
       image: require('../../assets/banner.png'),
       category: 'Boring',
+      categorySlug: 'boring',
       title: 'CNC Floor Boring Machine',
     },
     {
       id: 4,
       image: require('../../assets/banner.png'),
       category: 'Lathe',
+      categorySlug: 'turning-machines',
       title: 'CNC Lathe Bed Type Machine',
     },
   ];
@@ -81,32 +85,18 @@ const FeaturedProductsSection: React.FC = () => {
   const products = featuredProducts.length > 0 ? featuredProducts : fallbackProducts;
 
 
-  const handleProductPress = async (product: any) => {
-    try {
-      const productUrl = `https://www.sahilcnc.com/products/${product.slug}`;
-      
-      // Check if the URL can be opened
-      const canOpen = await Linking.canOpenURL(productUrl);
-      
-      if (canOpen) {
-        await Linking.openURL(productUrl);
-      } else {
-        console.log('Cannot open URL:', productUrl);
-        // Fallback: open main website
-        await Linking.openURL('https://www.sahilcnc.com');
-      }
-    } catch (error) {
-      console.error('Error opening product URL:', error);
-      // Fallback: open main website
-      try {
-        await Linking.openURL('https://www.sahilcnc.com');
-      } catch (fallbackError) {
-        console.error('Error opening fallback URL:', fallbackError);
-      }
+  const router = useRouter();
+
+  const handleProductPress = (product: any) => {
+    // Navigate to subcategory screen (parent category)
+    const categorySlug = product.category?.parentSlug || product.categorySlug;
+    if (categorySlug) {
+      router.push(`/subcategory?categorySlug=${categorySlug}`);
+    } else {
+      // Fallback: go to categories if no slug available
+      router.push('/categories');
     }
   };
-
-  const router = useRouter();
 
   const handleViewAllPress = () => {
     router.push('/categories');

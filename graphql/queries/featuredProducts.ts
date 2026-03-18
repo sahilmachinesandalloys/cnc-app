@@ -28,6 +28,13 @@ export const GET_MOBILE_FEATURED_PRODUCTS = gql`
                       attributes {
                         Title
                         Slug
+                        Category {
+                          data {
+                            attributes {
+                              Slug
+                            }
+                          }
+                        }
                       }
                     }
                   }
@@ -78,6 +85,13 @@ export interface MobileFeaturedProductsResponse {
                     attributes: {
                       Title: string;
                       Slug: string;
+                      Category: {
+                        data: {
+                          attributes: {
+                            Slug: string;
+                          };
+                        } | null;
+                      };
                     };
                   } | null;
                 };

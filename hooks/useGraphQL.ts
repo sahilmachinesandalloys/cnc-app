@@ -295,6 +295,7 @@ export const useFeaturedProductsApollo = () => {
       id: item.attributes.Category?.data?.attributes?.Slug || 'default',
       title: item.attributes.Category?.data?.attributes?.Title || 'Uncategorized',
       slug: item.attributes.Category?.data?.attributes?.Slug || '',
+      parentSlug: item.attributes.Category?.data?.attributes?.Category?.data?.attributes?.Slug || '',
     },
   })) || [];
 
